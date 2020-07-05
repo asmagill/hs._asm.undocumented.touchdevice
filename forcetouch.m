@@ -84,7 +84,7 @@ BOOL searchForForceTouchDevice(io_iterator_t iterator) {
 ///  * The existence of a feedback performer object is dependent upon the OS X version and not necessarily on the hardware available -- laptops with a trackpad which predates force touch will return true, even though this function does nothing on such systems.
 ///  * Even on systems with a force touch device, this function will only generate feedback when the device is active or being touched -- from the Apple docs: "In some cases, the system may override a call to this method. For example, a Force Touch trackpad won’t provide haptic feedback if the user isn’t touching the trackpad."
 static int forcetoucFeedback(lua_State *L) {
-    LuaSkin *skin = [LuaSkin shared] ;
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
     [skin checkArgs:LS_TSTRING, LS_TBOOLEAN | LS_TOPTIONAL, LS_TBREAK] ;
     NSString *type = [skin toNSObjectAtIndex:1] ;
     NSHapticFeedbackPattern         pattern ;
@@ -102,7 +102,7 @@ static int forcetoucFeedback(lua_State *L) {
 
     Class NSHFMClass = NSClassFromString(@"NSHapticFeedbackManager");
     if (NSHFMClass) {
-        id performer = [NSHFMClass defaultPerformer] ;
+        id<NSHapticFeedbackPerformer> performer = [NSHFMClass defaultPerformer] ;
         if (performer && [performer respondsToSelector:@selector(performFeedbackPattern:performanceTime:)]) {
             [performer performFeedbackPattern:pattern performanceTime:when] ;
             lua_pushboolean(L, YES) ;
@@ -128,7 +128,8 @@ static int forcetoucFeedback(lua_State *L) {
 /// Notes:
 ///  * Based in part on code from https://eternalstorms.wordpress.com/2015/11/16/how-to-detect-force-touch-capable-devices-on-the-mac/
 static int forcetouchDeviceDeviceAttached(lua_State *L) {
-    [[LuaSkin shared] checkArgs:LS_TBREAK] ;
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
+    [skin checkArgs:LS_TBREAK] ;
     lua_pushboolean(L, searchForForceTouchDevice(0)) ;
     return 1 ;
 }
@@ -151,7 +152,7 @@ static int forcetouchDeviceDeviceAttached(lua_State *L) {
 // }
 //
 // id to<moduleType>FromLua(lua_State *L, int idx) {
-//     LuaSkin *skin = [LuaSkin shared] ;
+//     LuaSkin *skin = [LuaSkin sharedWithState:L] ;
 //     <moduleType> *value ;
 //     if (luaL_testudata(L, idx, USERDATA_TAG)) {
 //         value = get_objectFromUserdata(__bridge <moduleType>, L, idx, USERDATA_TAG) ;
@@ -165,7 +166,7 @@ static int forcetouchDeviceDeviceAttached(lua_State *L) {
 #pragma mark - Hammerspoon/Lua Infrastructure
 
 // static int userdata_tostring(lua_State* L) {
-//     LuaSkin *skin = [LuaSkin shared] ;
+//     LuaSkin *skin = [LuaSkin sharedWithState:L] ;
 //     <moduleType> *obj = [skin luaObjectAtIndex:1 toClass:"<moduleType>"] ;
 //     NSString *title = ... ;
 //     [skin pushNSObject:[NSString stringWithFormat:@"%s: %@ (%p)", USERDATA_TAG, title, lua_topointer(L, 1)]] ;
@@ -176,7 +177,7 @@ static int forcetouchDeviceDeviceAttached(lua_State *L) {
 // // can't get here if at least one of us isn't a userdata type, and we only care if both types are ours,
 // // so use luaL_testudata before the macro causes a lua error
 //     if (luaL_testudata(L, 1, USERDATA_TAG) && luaL_testudata(L, 2, USERDATA_TAG)) {
-//         LuaSkin *skin = [LuaSkin shared] ;
+//         LuaSkin *skin = [LuaSkin sharedWithState:L] ;
 //         <moduleType> *obj1 = [skin luaObjectAtIndex:1 toClass:"<moduleType>"] ;
 //         <moduleType> *obj2 = [skin luaObjectAtIndex:2 toClass:"<moduleType>"] ;
 //         lua_pushboolean(L, [obj1 isEqualTo:obj2]) ;
@@ -220,8 +221,8 @@ static luaL_Reg moduleLib[] = {
 //     {NULL,   NULL}
 // };
 
-int luaopen_hs__asm_undocumented_touchdevice_forcetouch(lua_State* __unused L) {
-    LuaSkin *skin = [LuaSkin shared] ;
+int luaopen_hs__asm_undocumented_touchdevice_forcetouch(lua_State* L) {
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
 // Use this if your module doesn't have a module specific object that it returns.
    refTable = [skin registerLibrary:moduleLib metaFunctions:nil] ; // or module_metaLib
 // Use this some of your functions return or act on a specific object unique to this module

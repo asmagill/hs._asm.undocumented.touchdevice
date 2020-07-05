@@ -83,7 +83,7 @@ static const NSArray *pathStageNames ;
 ///   * `_field15`         - an integer; currently the purpose of this field in the touch structure is unknown; at present only a value of 0 has been observed.
 
 static int pushMTTouch(lua_State *L, MTTouch *touch) {
-    LuaSkin *skin = [LuaSkin shared] ;
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
     lua_newtable(L) ;
     lua_pushinteger(L, touch->frame) ;     lua_setfield(L, -2, "frame") ;
     lua_pushnumber(L, touch->timestamp) ;  lua_setfield(L, -2, "timestamp") ;
@@ -139,7 +139,7 @@ static void frameCallbackFunction(MTDeviceRef device, MTTouch *touches, size_t n
         dispatch_async(dispatch_get_main_queue(), ^{
             if (self.frameCallbackRef != LUA_NOREF) {
     // Because we're dispatching asynchronously, it's posible the callback ref has gone away before the callback actually runs
-                LuaSkin   *skin = [LuaSkin shared] ;
+                LuaSkin   *skin = [LuaSkin sharedWithState:NULL] ;
                 lua_State *L    = [skin L] ;
                 [skin pushLuaRef:refTable ref:self.frameCallbackRef] ;
                 [skin pushNSObject:self] ;
@@ -171,7 +171,7 @@ static void pathCallbackFunction(MTDeviceRef device, long pathID, long stage, MT
         dispatch_async(dispatch_get_main_queue(), ^{
     // Because we're dispatching asynchronously, it's posible the callback ref has gone away before the callback actually runs
             if (self.pathCallbackRef != LUA_NOREF) {
-                LuaSkin   *skin = [LuaSkin shared] ;
+                LuaSkin   *skin = [LuaSkin sharedWithState:NULL] ;
                 lua_State *L    = [skin L] ;
                 [skin pushLuaRef:refTable ref:self.pathCallbackRef] ;
                 [skin pushNSObject:self] ;
@@ -206,7 +206,7 @@ static void pathCallbackFunction(MTDeviceRef device, long pathID, long stage, MT
 /// Returns:
 ///  * a number specifying the time in seconds since the last system reboot
 static int touchdevice_absoluteTime(lua_State *L) {
-    LuaSkin *skin = [LuaSkin shared] ;
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
     [skin checkArgs:LS_TBREAK] ;
     lua_pushnumber(L, MTAbsoluteTimeGetCurrent()) ;
     return 1 ;
@@ -225,7 +225,7 @@ static int touchdevice_absoluteTime(lua_State *L) {
 /// Notes:
 ///  * multi-touch devices include the built-in trackpad found on any modern Mac laptop, the Magic Mouse, and the Magic Trackpad.
 static int touchdevice_isAvailable(lua_State *L) {
-    LuaSkin *skin = [LuaSkin shared] ;
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
     [skin checkArgs:LS_TBREAK] ;
     lua_pushboolean(L, MTDeviceIsAvailable()) ;
     return 1 ;
@@ -241,7 +241,7 @@ static int touchdevice_isAvailable(lua_State *L) {
 /// Returns:
 ///  * a table as an array containing the device id's of all currently attached/available multi-touch devices
 static int touchdevice_devices(lua_State *L) {
-    LuaSkin *skin = [LuaSkin shared] ;
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
     [skin checkArgs:LS_TBREAK] ;
     CFArrayRef mtdevices = MTDeviceCreateList() ;
     if (mtdevices) {
@@ -281,7 +281,7 @@ static int touchdevice_devices(lua_State *L) {
 /// Notes:
 ///  * on a laptop, the default multi-touch device will be the built in trackpad; on a desktop, the default device will be the first multi-touch device detected
 static int touchdevice_default(lua_State *L) {
-    LuaSkin *skin = [LuaSkin shared] ;
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
     [skin checkArgs:LS_TBREAK] ;
     MTDeviceRef device = MTDeviceCreateDefault() ;
     if (device) {
@@ -306,7 +306,7 @@ static int touchdevice_default(lua_State *L) {
 /// Notes:
 ///  * You can get a list of currently available device ids with [hs._asm.undocumented.touchdevice.devices](#devices) or get the device id for an existing object with [hs._asm.undocumented.touchdevice:deviceID](#deviceID).
 static int touchdevice_forDeviceID(lua_State *L) {
-    LuaSkin *skin = [LuaSkin shared] ;
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
     [skin checkArgs:LS_TNUMBER | LS_TINTEGER, LS_TBREAK] ;
     uint64_t deviceID = (uint64_t)lua_tointeger(L, 1) ;
 
@@ -332,7 +332,7 @@ static int touchdevice_forDeviceID(lua_State *L) {
 /// Returns:
 ///  * an integer specifying the device id for the multi-touch device represented by the touchdeviceObject
 static int touchdevice_deviceID(lua_State *L) {
-    LuaSkin *skin = [LuaSkin shared] ;
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
     [skin checkArgs:LS_TUSERDATA, USERDATA_TAG, LS_TBREAK] ;
     ASMTouchDevice *obj = [skin toNSObjectAtIndex:1] ;
     MTDeviceRef device = obj.touchDevice ;
@@ -359,7 +359,7 @@ static int touchdevice_deviceID(lua_State *L) {
 /// Notes:
 ///  * not all devices have a serial number so this value may be "None" or an empty string
 static int touchdevice_serialNumber(lua_State *L) {
-    LuaSkin *skin = [LuaSkin shared] ;
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
     [skin checkArgs:LS_TUSERDATA, USERDATA_TAG, LS_TBREAK] ;
     ASMTouchDevice *obj = [skin toNSObjectAtIndex:1] ;
     MTDeviceRef device = obj.touchDevice ;
@@ -392,7 +392,7 @@ static int touchdevice_serialNumber(lua_State *L) {
 /// Notes:
 ///  * This will be true for the trackpad built in to Mac laptops and false for any external device
 static int touchdevice_builtin(lua_State *L) {
-    LuaSkin *skin = [LuaSkin shared] ;
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
     [skin checkArgs:LS_TUSERDATA, USERDATA_TAG, LS_TBREAK] ;
     ASMTouchDevice *obj = [skin toNSObjectAtIndex:1] ;
     MTDeviceRef device = obj.touchDevice ;
@@ -413,7 +413,7 @@ static int touchdevice_builtin(lua_State *L) {
 /// Notes:
 ///  * Force touch devices provide haptic feedback indicating mouse clicks rather than use an actual mechanical switch to detect mouse clicks.
 static int touchdevice_supportsForce(lua_State *L) {
-    LuaSkin *skin = [LuaSkin shared] ;
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
     [skin checkArgs:LS_TUSERDATA, USERDATA_TAG, LS_TBREAK] ;
     ASMTouchDevice *obj = [skin toNSObjectAtIndex:1] ;
     MTDeviceRef device = obj.touchDevice ;
@@ -436,7 +436,7 @@ static int touchdevice_supportsForce(lua_State *L) {
 ///
 ///  * The MultitouchSupport framework does provide undocumented functions for accessing the actuator directly, but so far I've found no examples to start experimenting with.  Further investigation is being considered but is not currently underway.
 static int touchdevice_supportsActuation(lua_State *L) {
-    LuaSkin *skin = [LuaSkin shared] ;
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
     [skin checkArgs:LS_TUSERDATA, USERDATA_TAG, LS_TBREAK] ;
     ASMTouchDevice *obj = [skin toNSObjectAtIndex:1] ;
     MTDeviceRef device = obj.touchDevice ;
@@ -459,7 +459,7 @@ static int touchdevice_supportsActuation(lua_State *L) {
 ///
 ///  * This value appears to always be false unless the device is being watched for touch callbacks.
 static int touchdevice_isOpaqueSurface(lua_State *L) {
-    LuaSkin *skin = [LuaSkin shared] ;
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
     [skin checkArgs:LS_TUSERDATA, USERDATA_TAG, LS_TBREAK] ;
     ASMTouchDevice *obj = [skin toNSObjectAtIndex:1] ;
     MTDeviceRef device = obj.touchDevice ;
@@ -480,7 +480,7 @@ static int touchdevice_isOpaqueSurface(lua_State *L) {
 /// Notes:
 ///  * See [hs._asm.undocumented.touchdevice:start](#start) and [hs._asm.undocumented.touchdevice:stop](#stop)
 static int touchdevice_isRunning(lua_State *L) {
-    LuaSkin *skin = [LuaSkin shared] ;
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
     [skin checkArgs:LS_TUSERDATA, USERDATA_TAG, LS_TBREAK] ;
     ASMTouchDevice *obj = [skin toNSObjectAtIndex:1] ;
     MTDeviceRef device = obj.touchDevice ;
@@ -502,7 +502,7 @@ static int touchdevice_isRunning(lua_State *L) {
 ///  * At present, the usefulness of this information is currently unknown and it is being provided for information purposes only.
 ///  * I have only observed this as returning false; please submit details if you observe a different value.
 static int touchdevice_isAlive(lua_State *L) {
-    LuaSkin *skin = [LuaSkin shared] ;
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
     [skin checkArgs:LS_TUSERDATA, USERDATA_TAG, LS_TBREAK] ;
     ASMTouchDevice *obj = [skin toNSObjectAtIndex:1] ;
     MTDeviceRef device = obj.touchDevice ;
@@ -523,7 +523,7 @@ static int touchdevice_isAlive(lua_State *L) {
 /// Notes:
 ///  * At present, the usefulness of this information is currently unknown and it is being provided for information purposes only.
 static int touchdevice_isMTHIDDevice(lua_State *L) {
-    LuaSkin *skin = [LuaSkin shared] ;
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
     [skin checkArgs:LS_TUSERDATA, USERDATA_TAG, LS_TBREAK] ;
     ASMTouchDevice *obj = [skin toNSObjectAtIndex:1] ;
     MTDeviceRef device = obj.touchDevice ;
@@ -544,7 +544,7 @@ static int touchdevice_isMTHIDDevice(lua_State *L) {
 /// Notes:
 ///  * At present, the usefulness of this information is currently unknown and it is being provided for information purposes only.
 static int touchdevice_driverReady(lua_State *L) {
-    LuaSkin *skin = [LuaSkin shared] ;
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
     [skin checkArgs:LS_TUSERDATA, USERDATA_TAG, LS_TBREAK] ;
     ASMTouchDevice *obj = [skin toNSObjectAtIndex:1] ;
     MTDeviceRef device = obj.touchDevice ;
@@ -566,7 +566,7 @@ static int touchdevice_driverReady(lua_State *L) {
 ///  * At present, the usefulness of this information is currently unknown and it is being provided for information purposes only.
 ///  * I have only observed this as returning false; please submit details if you observe a different value.
 static int touchdevice_powerControlSupported(lua_State *L) {
-    LuaSkin *skin = [LuaSkin shared] ;
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
     [skin checkArgs:LS_TUSERDATA, USERDATA_TAG, LS_TBREAK] ;
     ASMTouchDevice *obj = [skin toNSObjectAtIndex:1] ;
     MTDeviceRef device = obj.touchDevice ;
@@ -588,7 +588,7 @@ static int touchdevice_powerControlSupported(lua_State *L) {
 ///  * this information is purely informational and may be useful in differentiating multiple devices attached to the same machine
 ///  * some devices return a name corresponding to the marketting name for the device while others return a name created by the macOS generated when the device is first paired with the machine, usually the user's login name followed by "Mouse" or "Trackpad".  At this time, it is unknown if there is an independant way to determine which pattern a given device's product name will follow or if there is a way to return the marketting name for an otherwise named device; if someone more familiar with IOKit, especially with regards to HID devices has any thoughts on the matter, please submit an issue for consideration.
 static int touchdevice_productName(lua_State *L) {
-    LuaSkin *skin = [LuaSkin shared] ;
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
     [skin checkArgs:LS_TUSERDATA, USERDATA_TAG, LS_TBREAK] ;
     ASMTouchDevice *obj = [skin toNSObjectAtIndex:1] ;
     MTDeviceRef device = obj.touchDevice ;
@@ -618,7 +618,7 @@ static int touchdevice_productName(lua_State *L) {
 ///  * At present, the usefulness of the row/column dimension values is currently unknown and it is being provided for information purposes only
 ///    * The row/column values seem to correspond to a grid used by the MultitouchSupport framework to differentiate between nearby touches and the exact size of each "cell" appears to be device dependent as the ratios between rows and columns versus the height and width as returned in hundredths of a millimeter is not consistent across devices.
 static int touchdevice_sensorDimensions(lua_State *L) {
-    LuaSkin *skin = [LuaSkin shared] ;
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
     [skin checkArgs:LS_TUSERDATA, USERDATA_TAG, LS_TBOOLEAN | LS_TOPTIONAL, LS_TBREAK] ;
     ASMTouchDevice *obj = [skin toNSObjectAtIndex:1] ;
     MTDeviceRef device = obj.touchDevice ;
@@ -650,7 +650,7 @@ static int touchdevice_sensorDimensions(lua_State *L) {
 /// Notes:
 ///  * At present, the usefulness of this information is currently unknown and it is being provided for information purposes only.
 static int touchdevice_familyID(lua_State *L) {
-    LuaSkin *skin = [LuaSkin shared] ;
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
     [skin checkArgs:LS_TUSERDATA, USERDATA_TAG, LS_TBREAK] ;
     ASMTouchDevice *obj = [skin toNSObjectAtIndex:1] ;
     MTDeviceRef device = obj.touchDevice ;
@@ -677,7 +677,7 @@ static int touchdevice_familyID(lua_State *L) {
 /// Notes:
 ///  * At present, the usefulness of this information is currently unknown and it is being provided for information purposes only.
 static int touchdevice_version(lua_State *L) {
-    LuaSkin *skin = [LuaSkin shared] ;
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
     [skin checkArgs:LS_TUSERDATA, USERDATA_TAG, LS_TBREAK] ;
     ASMTouchDevice *obj = [skin toNSObjectAtIndex:1] ;
     MTDeviceRef device = obj.touchDevice ;
@@ -704,7 +704,7 @@ static int touchdevice_version(lua_State *L) {
 /// Notes:
 ///  * At present, the usefulness of this information is currently unknown and it is being provided for information purposes only.
 static int touchdevice_driverType(lua_State *L) {
-    LuaSkin *skin = [LuaSkin shared] ;
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
     [skin checkArgs:LS_TUSERDATA, USERDATA_TAG, LS_TBREAK] ;
     ASMTouchDevice *obj = [skin toNSObjectAtIndex:1] ;
     MTDeviceRef device = obj.touchDevice ;
@@ -732,7 +732,7 @@ static int touchdevice_driverType(lua_State *L) {
 ///  * This method will return true for non force-touch devices -- they do not have a simulated click sound associated with mouse clicks so they are considered "silent" by the MultitouchSupport framework already.
 ///  * Some force touch devices do not support disabling this simulated sound and will return false with this method; this seems to mostly apply to newer Mac Pro laptops, though an exhaustive list is beyond the scope of this documentation.  If you are uncertain about your force touch device, check Trackpad in System Preferences -- if you see an option for "Silent clicking" then this method should return true for your force touch device.
 static int touchdevice_supportsSilentClick(lua_State *L) {
-    LuaSkin *skin = [LuaSkin shared] ;
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
     [skin checkArgs:LS_TUSERDATA, USERDATA_TAG, LS_TBREAK] ;
     ASMTouchDevice *obj = [skin toNSObjectAtIndex:1] ;
     MTDeviceRef device = obj.touchDevice ;
@@ -759,7 +759,7 @@ static int touchdevice_supportsSilentClick(lua_State *L) {
 /// Notes:
 ///  * At present, the usefulness of this information is currently unknown and it is being provided for information purposes only.
 static int touchdevice_GUID(lua_State *L) {
-    LuaSkin *skin = [LuaSkin shared] ;
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
     [skin checkArgs:LS_TUSERDATA, USERDATA_TAG, LS_TBREAK] ;
     ASMTouchDevice *obj = [skin toNSObjectAtIndex:1] ;
     MTDeviceRef device = obj.touchDevice ;
@@ -802,7 +802,7 @@ static int touchdevice_GUID(lua_State *L) {
 ///
 ///  * If you wish to suspend mouse gestures as well, you can use `hs.execute("killall -STOP Dock")`.  Note however that this disables gestures for *ALL* touch devices and also disables application switching from the keyboard as well (you can still click on an another applications windows with another mouse device though). You can resume normal operation of the gestures and keyboard shortcuts with `hs.execute("killall -CONT Dock")`. It is unknown what other processes suspending the Dock in this way may cause, so do so at your own risk.
 static int touchdevice_forceResponseEnabled(lua_State *L) {
-    LuaSkin *skin = [LuaSkin shared] ;
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
     [skin checkArgs:LS_TUSERDATA, USERDATA_TAG, LS_TBOOLEAN | LS_TOPTIONAL, LS_TBREAK] ;
     ASMTouchDevice *obj = [skin toNSObjectAtIndex:1] ;
     MTDeviceRef device = obj.touchDevice ;
@@ -834,7 +834,7 @@ static int touchdevice_forceResponseEnabled(lua_State *L) {
 ///    * `timestamp` - a number specifying the timestamp for the frame.
 ///    * `frame`     - an integer specifying the frame ID
 static int touchdevice_frameCallback(lua_State *L) {
-    LuaSkin *skin = [LuaSkin shared] ;
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
     [skin checkArgs:LS_TUSERDATA, USERDATA_TAG, LS_TFUNCTION | LS_TNIL | LS_TOPTIONAL, LS_TBREAK] ;
     ASMTouchDevice *obj = [skin toNSObjectAtIndex:1] ;
     MTDeviceRef device = obj.touchDevice ;
@@ -881,7 +881,7 @@ static int touchdevice_frameCallback(lua_State *L) {
 ///    * `stage`     - a string representing the current stage of the touch. Will be one of "notTracking", "startInRange", "hoverInRange", "makeTouch", "touching", "breakTouch", "lingerInRange", or "outOfRange".
 ///    * `touch`     - a touch tables as described in [hs._asm.undocumented.touchdevice.touchData](#touchData) for the specific touch
 static int touchdevice_pathCallback(lua_State *L) {
-    LuaSkin *skin = [LuaSkin shared] ;
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
     [skin checkArgs:LS_TUSERDATA, USERDATA_TAG, LS_TFUNCTION | LS_TNIL | LS_TOPTIONAL, LS_TBREAK] ;
     ASMTouchDevice *obj = [skin toNSObjectAtIndex:1] ;
     MTDeviceRef device = obj.touchDevice ;
@@ -919,7 +919,7 @@ static int touchdevice_pathCallback(lua_State *L) {
 /// Returns:
 ///  * the touchdeviceObject
 static int touchdevice_start(lua_State *L) {
-    LuaSkin *skin = [LuaSkin shared] ;
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
     [skin checkArgs:LS_TUSERDATA, USERDATA_TAG, LS_TBOOLEAN | LS_TOPTIONAL, LS_TBREAK] ;
     ASMTouchDevice *obj = [skin toNSObjectAtIndex:1] ;
     MTDeviceRef device = obj.touchDevice ;
@@ -948,7 +948,7 @@ static int touchdevice_start(lua_State *L) {
 /// Returns:
 ///  * the touchdeviceObject
 static int touchdevice_stop(lua_State *L) {
-    LuaSkin *skin = [LuaSkin shared] ;
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
     [skin checkArgs:LS_TUSERDATA, USERDATA_TAG, LS_TBREAK] ;
     ASMTouchDevice *obj = [skin toNSObjectAtIndex:1] ;
     MTDeviceRef device = obj.touchDevice ;
@@ -966,7 +966,7 @@ static int touchdevice_stop(lua_State *L) {
 #if defined(INCLUDE_QUESTIONABLE_METHODS)
 
 static int touchdevice_enableDebugCallbacks(lua_State *L) {
-    LuaSkin *skin = [LuaSkin shared] ;
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
     [skin checkArgs:LS_TUSERDATA, USERDATA_TAG,
                     LS_TBOOLEAN | LS_TOPTIONAL,
                     LS_TBOOLEAN | LS_TOPTIONAL,
@@ -989,7 +989,7 @@ static int touchdevice_enableDebugCallbacks(lua_State *L) {
 }
 
 static int touchdevice_minDigitizerPressure(lua_State *L) {
-    LuaSkin *skin = [LuaSkin shared] ;
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
     [skin checkArgs:LS_TUSERDATA, USERDATA_TAG, LS_TBREAK] ;
     ASMTouchDevice *obj = [skin toNSObjectAtIndex:1] ;
     MTDeviceRef device = obj.touchDevice ;
@@ -998,7 +998,7 @@ static int touchdevice_minDigitizerPressure(lua_State *L) {
 }
 
 static int touchdevice_maxDigitizerPressure(lua_State *L) {
-    LuaSkin *skin = [LuaSkin shared] ;
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
     [skin checkArgs:LS_TUSERDATA, USERDATA_TAG, LS_TBREAK] ;
     ASMTouchDevice *obj = [skin toNSObjectAtIndex:1] ;
     MTDeviceRef device = obj.touchDevice ;
@@ -1007,7 +1007,7 @@ static int touchdevice_maxDigitizerPressure(lua_State *L) {
 }
 
 static int touchdevice_digitizerPressureRange(lua_State *L) {
-    LuaSkin *skin = [LuaSkin shared] ;
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
     [skin checkArgs:LS_TUSERDATA, USERDATA_TAG, LS_TBREAK] ;
     ASMTouchDevice *obj = [skin toNSObjectAtIndex:1] ;
     MTDeviceRef device = obj.touchDevice ;
@@ -1016,7 +1016,7 @@ static int touchdevice_digitizerPressureRange(lua_State *L) {
 }
 
 static int touchdevice_powerEnabled(lua_State *L) {
-    LuaSkin *skin = [LuaSkin shared] ;
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
     [skin checkArgs:LS_TUSERDATA, USERDATA_TAG, LS_TBOOLEAN | LS_TOPTIONAL, LS_TBREAK] ;
     ASMTouchDevice *obj = [skin toNSObjectAtIndex:1] ;
     MTDeviceRef device = obj.touchDevice ;
@@ -1053,7 +1053,7 @@ static int pushASMTouchDevice(lua_State *L, id obj) {
 }
 
 id toASMTouchDeviceFromLua(lua_State *L, int idx) {
-    LuaSkin *skin = [LuaSkin shared] ;
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
     ASMTouchDevice *value ;
     if (luaL_testudata(L, idx, USERDATA_TAG)) {
         value = get_objectFromUserdata(__bridge ASMTouchDevice, L, idx, USERDATA_TAG) ;
@@ -1067,7 +1067,7 @@ id toASMTouchDeviceFromLua(lua_State *L, int idx) {
 #pragma mark - Hammerspoon/Lua Infrastructure
 
 static int userdata_tostring(lua_State* L) {
-    LuaSkin *skin = [LuaSkin shared] ;
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
     ASMTouchDevice *obj = [skin luaObjectAtIndex:1 toClass:"ASMTouchDevice"] ;
     MTDeviceRef device = obj.touchDevice ;
     NSString *deviceIDString = @"<unknown>" ;
@@ -1083,7 +1083,7 @@ static int userdata_eq(lua_State* L) {
 // can't get here if at least one of us isn't a userdata type, and we only care if both types are ours,
 // so use luaL_testudata before the macro causes a lua error
     if (luaL_testudata(L, 1, USERDATA_TAG) && luaL_testudata(L, 2, USERDATA_TAG)) {
-        LuaSkin *skin = [LuaSkin shared] ;
+        LuaSkin *skin = [LuaSkin sharedWithState:L] ;
         ASMTouchDevice *obj1 = [skin luaObjectAtIndex:1 toClass:"ASMTouchDevice"] ;
         ASMTouchDevice *obj2 = [skin luaObjectAtIndex:2 toClass:"ASMTouchDevice"] ;
         lua_pushboolean(L, [obj1 isEqualTo:obj2]) ;
@@ -1098,7 +1098,7 @@ static int userdata_gc(lua_State* L) {
     if (obj) {
         obj.selfRefCount-- ;
         if (obj.selfRefCount == 0) {
-            LuaSkin *skin = [LuaSkin shared] ;
+            LuaSkin *skin = [LuaSkin sharedWithState:L] ;
             obj.frameCallbackRef = [skin luaUnref:refTable ref:obj.frameCallbackRef] ;
             obj.pathCallbackRef = [skin luaUnref:refTable ref:obj.pathCallbackRef] ;
             MTUnregisterPathCallbackWithRefcon(obj.touchDevice, pathCallbackFunction) ;
@@ -1181,8 +1181,8 @@ static luaL_Reg moduleLib[] = {
 //     {NULL,   NULL}
 // };
 
-int luaopen_hs__asm_undocumented_touchdevice_internal(lua_State* __unused L) {
-    LuaSkin *skin = [LuaSkin shared] ;
+int luaopen_hs__asm_undocumented_touchdevice_internal(lua_State* L) {
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
     refTable = [skin registerLibraryWithObject:USERDATA_TAG
                                      functions:moduleLib
                                  metaFunctions:nil // module_metaLib

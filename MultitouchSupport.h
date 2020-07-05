@@ -67,13 +67,13 @@ typedef void (*MTFrameCallbackFunction)(MTDeviceRef device,
 typedef void (*MTPathCallbackFunction)(MTDeviceRef device, long pathID, long stage, MTTouch* touch) ;
 typedef void (*MTPathCallbackFunctionWithRefcon)(MTDeviceRef device, long pathID, long stage, MTTouch* touch, void* refCon) ;
 
-extern CFTypeID           MTDeviceGetTypeID() ;
+extern CFTypeID           MTDeviceGetTypeID(void) ;
 
-extern double             MTAbsoluteTimeGetCurrent() ;
-extern BOOL               MTDeviceIsAvailable() ;
+extern double             MTAbsoluteTimeGetCurrent(void) ;
+extern BOOL               MTDeviceIsAvailable(void) ;
 
-extern CFArrayRef         MTDeviceCreateList() ;
-extern MTDeviceRef        MTDeviceCreateDefault() ;
+extern CFArrayRef         MTDeviceCreateList(void) ;
+extern MTDeviceRef        MTDeviceCreateDefault(void) ;
 extern MTDeviceRef        MTDeviceCreateFromDeviceID(uint64_t) ;
 extern void               MTDeviceRelease(MTDeviceRef) ;
 
