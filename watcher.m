@@ -124,13 +124,12 @@ static NSMutableDictionary   *_discoveredDevices ;
         _lua_stackguard_entry(L) ;
 
         [skin pushLuaRef:refTable ref:_callbackRef] ;
-        [skin pushNSObject:self] ;
         lua_pushstring(L, "add") ;
 // interesting, but ultimately not very useful at present
 //             [skin pushNSObject:(__bridge NSDictionary *)deviceData withOptions:LS_NSDescribeUnknownTypes] ;
         [skin pushNSObject:(__bridge NSNumber *)multitouchID] ;
         [skin protectedCallAndError:[NSString stringWithFormat:@"%s:addDevice callback error", USERDATA_TAG]
-                              nargs:3
+                              nargs:2
                            nresults:0] ;
 
         _lua_stackguard_exit(L) ;
@@ -156,11 +155,10 @@ static NSMutableDictionary   *_discoveredDevices ;
         _lua_stackguard_entry(L) ;
 
         [skin pushLuaRef:refTable ref:_callbackRef] ;
-        [skin pushNSObject:self] ;
         lua_pushstring(L, "remove") ;
         [skin pushNSObject:multitouchID] ;
         [skin protectedCallAndError:[NSString stringWithFormat:@"%s:removeDevice callback error", USERDATA_TAG]
-                              nargs:3
+                              nargs:2
                            nresults:0] ;
 
         _lua_stackguard_exit(L) ;
@@ -230,9 +228,8 @@ static int td_watcher_new(lua_State *L) {
 ///  * if an argument is provided, returns the watcherObject; otherwise returns the callback function, if defined, or nil if no callback function is currently assigned.
 ///
 /// Notes:
-///  * The callback function should expect 3 arguments and return none:
-///    * `watcher` - the watcher object for this watcher
-///    * `state`   - a strng specifying whether a new device was added ("add") or an existing device was removed ("remove").
+///  * The callback function should expect 2 arguments and return none:
+///    * `state`   - a string specifying whether a new device was added ("add") or an existing device was removed ("remove").
 ///    * `mtID`    - an integer specifying the multitouch ID for the device which has been added or removed. See the documentation for `hs._asm.undocumented.touchdevice` for how to use this ID.
 static int td_watcher_callback(lua_State *L) {
     LuaSkin *skin = [LuaSkin sharedWithState:L] ;
@@ -357,6 +354,10 @@ static int userdata_gc(lua_State* L) {
     ASMTouchDeviceWatcher *obj = get_objectFromUserdata(__bridge_transfer ASMTouchDeviceWatcher, L, 1, USERDATA_TAG) ;
     if (obj) {
         obj. selfRefCount-- ;
+        // note to self when replicating this code... if we want to push watcher ud in callbacks
+        // we need a way to ensure that their collection doesn't trigger this since they will be
+        // different ud for the same obj (unless we move to selfRef approach, which would then
+        // require explicit delete).
         if (obj.selfRefCount == 0) {
             LuaSkin *skin = [LuaSkin sharedWithState:L] ;
             obj.callbackRef = [skin luaUnref:refTable ref:obj.callbackRef] ;

@@ -769,8 +769,7 @@ Returns:
  * if an argument is provided, returns the watcherObject; otherwise returns the callback function, if defined, or nil if no callback function is currently assigned.
 
 Notes:
- * The callback function should expect 3 arguments and return none:
-   * `watcher` - the watcher object for this watcher
+ * The callback function should expect 2 arguments and return none:
    * `state`   - a strng specifying whether a new device was added ("add") or an existing device was removed ("remove").
    * `mtID`    - an integer specifying the multitouch ID for the device which has been added or removed. See the documentation for `hs._asm.undocumented.touchdevice` for how to use this ID.
 
