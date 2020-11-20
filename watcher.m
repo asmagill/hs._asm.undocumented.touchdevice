@@ -23,12 +23,38 @@ static void deviceChangeCallback(void *refCon, io_service_t service, natural_t m
 @property (readonly) BOOL                  running ;
 @end
 
+@interface ASMTouchDeviceDevice : NSObject
+@property (weak) ASMTouchDeviceWatcher *owner ;
+@property        NSNumber              *multitouchID ;
+@end
+
+@implementation ASMTouchDeviceDevice
+static io_object_t _notification ;
+
+-(instancetype)initWithOwner:(ASMTouchDeviceWatcher *)owner forID:(NSNumber *)mtID {
+    self = [super init] ;
+    if (self) {
+        _owner        = owner ;
+        _multitouchID = mtID ;
+    }
+    return self ;
+}
+
+-(void)dealloc {
+    if (_owner) IOObjectRelease(_notification) ;
+}
+
+-(io_object_t *)notificationAddress {
+    return &_notification ;
+}
+@end
+
 @implementation ASMTouchDeviceWatcher
 static BOOL                  _firstRun ;
 static IONotificationPortRef _notificationPort ;
 static io_iterator_t         _iterator ;
 static CFRunLoopSourceRef    _runLoopSource ;
-static NSMutableDictionary   *_discoveredDevices ;
+static NSMutableArray        *_discoveredDevices ;
 
 - (instancetype)init {
     self = [super init] ;
@@ -40,7 +66,7 @@ static NSMutableDictionary   *_discoveredDevices ;
         _notificationPort  = IONotificationPortCreate(kIOMasterPortDefault) ;
         _runLoopSource     = IONotificationPortGetRunLoopSource(_notificationPort) ;
         _firstRun          = NO ;
-        _discoveredDevices = [NSMutableDictionary dictionary] ;
+        _discoveredDevices = [NSMutableArray array] ;
     }
     return self ;
 }
@@ -48,15 +74,8 @@ static NSMutableDictionary   *_discoveredDevices ;
 -(void)dealloc {
     [self stop] ;
     if (_discoveredDevices) {
-        [_discoveredDevices enumerateKeysAndObjectsUsingBlock:^(NSNumber *key, NSDictionary *value, __unused BOOL *stop) {
-            NSValue  *notificationValue = value[@"notification"] ;
-            io_object_t *notification = notificationValue.pointerValue ;
-            IOObjectRelease(*notification) ;
-            free(notification) ;
-            io_service_t service = key.unsignedIntValue ;
-            IOObjectRelease(service) ;
-        }];
         [_discoveredDevices removeAllObjects] ;
+        _discoveredDevices = nil ;
     }
     IONotificationPortDestroy(_notificationPort) ;
 }
@@ -99,23 +118,19 @@ static NSMutableDictionary   *_discoveredDevices ;
     CFNumberRef multitouchID = CFDictionaryGetValue(deviceData, CFSTR("Multitouch ID")) ;
     // set up notifier for when device disappears
 
-
-    io_object_t *notification = malloc(sizeof(io_object_t)) ;
+    ASMTouchDeviceDevice *deviceNotifier = [[ASMTouchDeviceDevice alloc] initWithOwner:self forID:(__bridge NSNumber *)multitouchID] ;
     kern_return_t err = IOServiceAddInterestNotification(_notificationPort,
                                                          service,
                                                          kIOGeneralInterest,
                                                          deviceChangeCallback,
-                                                         (__bridge void *)self,
-                                                         notification);
+                                                         (__bridge void *)deviceNotifier,
+                                                         [deviceNotifier notificationAddress]);
+
     if (err == KERN_SUCCESS) {
-        IOObjectRetain(service) ; // retain because we're using it as a key in a dictionary
-        _discoveredDevices[@(service)] = @ {
-            @"multitouchID" : (__bridge NSNumber *)multitouchID,
-            @"notification" : [NSValue valueWithPointer:notification]
-        } ;
+        [_discoveredDevices addObject:deviceNotifier] ;
     } else {
         [LuaSkin logError:[NSString stringWithFormat:@"%s:addDevice - unable to create change watcher to detect removal (error 0x%0x)", USERDATA_TAG, err]] ;
-        free(notification) ;
+        deviceNotifier.owner = nil ;
     }
 
     if (!_firstRun && _callbackRef != LUA_NOREF) {
@@ -127,7 +142,7 @@ static NSMutableDictionary   *_discoveredDevices ;
         lua_pushstring(L, "add") ;
 // interesting, but ultimately not very useful at present
 //             [skin pushNSObject:(__bridge NSDictionary *)deviceData withOptions:LS_NSDescribeUnknownTypes] ;
-        [skin pushNSObject:(__bridge NSNumber *)multitouchID] ;
+        [skin pushNSObject:deviceNotifier.multitouchID] ;
         [skin protectedCallAndError:[NSString stringWithFormat:@"%s:addDevice callback error", USERDATA_TAG]
                               nargs:2
                            nresults:0] ;
@@ -137,18 +152,7 @@ static NSMutableDictionary   *_discoveredDevices ;
     CFRelease(deviceData) ;
 }
 
--(void)removeDevice:(io_service_t)service {
-    NSDictionary *serviceDetails   = _discoveredDevices[@(service)] ;
-    NSValue  *notificationValue = serviceDetails[@"notification"] ;
-    NSNumber *multitouchID      = serviceDetails[@"multitouchID"] ;
-    [_discoveredDevices removeObjectForKey:@(service)] ;
-
-    IOObjectRelease(service) ; // no longer being a dictionary key
-    io_object_t *notification = notificationValue.pointerValue ;
-    IOObjectRelease(*notification) ;
-    free(notification) ;
-
-
+-(void)removeDevice:(ASMTouchDeviceDevice *)deviceNotifier {
     if (_callbackRef != LUA_NOREF) {
         LuaSkin *skin = [LuaSkin sharedWithState:NULL] ;
         lua_State *L = skin.L ;
@@ -156,21 +160,24 @@ static NSMutableDictionary   *_discoveredDevices ;
 
         [skin pushLuaRef:refTable ref:_callbackRef] ;
         lua_pushstring(L, "remove") ;
-        [skin pushNSObject:multitouchID] ;
+        [skin pushNSObject:deviceNotifier.multitouchID] ;
         [skin protectedCallAndError:[NSString stringWithFormat:@"%s:removeDevice callback error", USERDATA_TAG]
                               nargs:2
                            nresults:0] ;
 
         _lua_stackguard_exit(L) ;
     }
+
+//     IOObjectRelease(deviceNotifier.notification) ; -- taken care of during dealloc of deviceNotifier
+    [_discoveredDevices removeObject:deviceNotifier] ;
 }
 
 @end
 
-static void deviceChangeCallback(void *refCon, io_service_t service, natural_t messageType, __unused void *messageArgument) {
-    ASMTouchDeviceWatcher *self = (__bridge ASMTouchDeviceWatcher *)refCon ;
+static void deviceChangeCallback(void *refCon, __unused io_service_t service, natural_t messageType, __unused void *messageArgument) {
+    ASMTouchDeviceDevice *deviceNotifier = (__bridge ASMTouchDeviceDevice *)refCon ;
     if (messageType == kIOMessageServiceIsTerminated) {
-        [self removeDevice:service] ;
+        [deviceNotifier.owner removeDevice:deviceNotifier] ;
     }
 }
 
