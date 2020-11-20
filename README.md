@@ -9,6 +9,7 @@ Portions of this module have been influenced or inspired by code found at the fo
  * https://github.com/INRIA/libpointing/blob/master/pointing/input/osx/osxPrivateMultitouchSupport.h
  * https://github.com/calftrail/Touch
  * https://github.com/jnordberg/FingerMgmt
+ * https://github.com/artginzburg/MiddleClick-Catalina
  * ...and I'm sure others that have slipped my mind.
 
 If you feel that I have missed a particular site that should be referenced, or know of a site with additional information that can clarify or expand this module or any of its functions -- many of the informational methods are not fully understood and clarification would be greatly appreciated -- please do not hesitate to submit an issue or pull request at https://github.com/asmagill/hammerspoon_asm.undocumented for consideration.
@@ -25,7 +26,7 @@ $ cd ~/.hammerspoon # or wherever your Hammerspoon init.lua file is located
 $ tar -xzf ~/Downloads/touchdevice-v0.x.tar.gz # or wherever your downloads are located
 ~~~
 
-If you wish to build this module yourself, and have XCode installed on your Mac, the best way (you are welcome to clone the entire repository if you like, but no promises on the current state of anything else) is to download `init.lua`, `internal.m`, `forcetouch.m`, `MultitouchSupport.h`, and `Makefile` (at present, nothing else is required) into a directory of your choice and then do the following:
+If you wish to build this module yourself, and have XCode installed on your Mac, the best way is to clone this repository into a directory of your choice and then do the following:
 
 ~~~sh
 $ cd wherever-you-downloaded-the-files
@@ -43,6 +44,9 @@ touchdevice = require("hs._asm.undocumented.touchdevice")
 
 ### Contents
 
+##### Submodules
+* <a href="#forcetouchHeader">hs._asm.undocumented.touchdevice.forcetouch</a>
+* <a href="#watcherHeader">hs._asm.undocumented.touchdevice.watcher</a>
 
 ##### Module Constructors
 * <a href="#default">touchdevice.default() -> touchdeviceObject</a>
@@ -642,7 +646,7 @@ The table will contain the following key-value pairs:
   * `_field15`         - an integer; currently the purpose of this field in the touch structure is unknown; at present only a value of 0 has been observed.
 
 * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-
+<a name="forcetouchHeader"></a>
 hs._asm.undocumented.touchdevice.forcetouch
 ===========================================
 
@@ -704,13 +708,124 @@ Notes:
  * The existence of a feedback performer object is dependent upon the OS X version and not necessarily on the hardware available -- laptops with a trackpad which predates force touch will return true, even though this function does nothing on such systems.
  * Even on systems with a force touch device, this function will only generate feedback when the device is active or being touched -- from the Apple docs: "In some cases, the system may override a call to this method. For example, a Force Touch trackpad won’t provide haptic feedback if the user isn’t touching the trackpad."
 
+* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+<a name="watcherHeader"></a>
+hs._asm.undocumented.touchdevice.watcher
+========================================
+
+This module allows you to watch for the attaching and detaching of Apple Multitouch devices like the Magic Trackpad and the Force Touch Trackpad.
+
+On a MacBook Pro, mid 2014, this module does not detect the presence of the built in pre-force touch trackpad, even when passing `true` to [hs._asm.undocumented.touchdevice.watcher:start](#start), as it uses a different IOService identifier than the external devices I have available to me for testing. I do not know if newer laptops will have this same limitation.
+
+### Usage
+~~~lua
+watcher = require("hs._asm.undocumented.touchdevice.watcher")
+~~~
+
+### Contents
+
+
+##### Module Constructors
+* <a href="#new">watcher.new([fn]) -> watcherObject | nil</a>
+
+##### Module Methods
+* <a href="#callback">watcher:callback([fn | nil]) -> watcherObject | function | nil</a>
+* <a href="#isRunning">watcher:isRunning() -> boolean</a>
+* <a href="#start">watcher:start([includeExisting]) -> watcherObject</a>
+* <a href="#stop">watcher:stop() -> watcherObject</a>
+
+- - -
+
+### Module Constructors
+
+<a name="new"></a>
+~~~lua
+watcher.new([fn]) -> watcherObject | nil
+~~~
+Creates a new Multitouch device watcher
+
+Parameters:
+ * `fn` - an optional function which will be invoked when a multitouch trackpad is added or removed  from the system. See also [hs._asm.undocumented.touchdevice.watcher:callback](#callback).
+
+Returns:
+ * the watcherObject or nil if there was an error creating the watcher.
+
+Notes:
+ * This constructor creates the watcher, but does not start it. See [hs._asm.undocumented.touchdevice.watcher:start](#start).
+ * For details about the callback function, see [hs._asm.undocumented.touchdevice.watcher:callback](#callback).
+
+### Module Methods
+
+<a name="callback"></a>
+~~~lua
+watcher:callback([fn | nil]) -> watcherObject | function | nil
+~~~
+Get or change the callback function assigned to the watcher.
+
+Parameters:
+ * `fn` - an optional function or explicit `nil` which will replace the existing callback if provided. An explicit `nil` will remove the existing callback, if any, without replacing it.
+
+Returns:
+ * if an argument is provided, returns the watcherObject; otherwise returns the callback function, if defined, or nil if no callback function is currently assigned.
+
+Notes:
+ * The callback function should expect 3 arguments and return none:
+   * `watcher` - the watcher object for this watcher
+   * `state`   - a strng specifying whether a new device was added ("add") or an existing device was removed ("remove").
+   * `mtID`    - an integer specifying the multitouch ID for the device which has been added or removed. See the documentation for `hs._asm.undocumented.touchdevice` for how to use this ID.
+
+- - -
+
+<a name="isRunning"></a>
+~~~lua
+watcher:isRunning() -> boolean
+~~~
+Returns whether or not the watcher is currently active.
+
+Parameters:
+ * None
+
+Returns:
+ * true of the watcher is running or false if it is not.
+
+- - -
+
+<a name="start"></a>
+~~~lua
+watcher:start([includeExisting]) -> watcherObject
+~~~
+Starts the watcher so that multitouch devices being added or removed will trigger a callback.
+
+Parameters:
+ * `includeExisting` - an optional boolean, default false, indicating whether or not existing devices detected when the watcher starts should trigger immediate "add" callbacks or not. Existing devices will still trigger "remove" callbacks when they are removed, even if this argument is false or unset.
+
+Returns:
+ * the watcherObject
+
+Notes:
+ * in initial testing, the built in pre forcetouch trackpad on a 2014 MacBook Pro is not detected by this watcher, even when this method is passed `true`. It is uncertain at this time if this will also be the case for more modern machines or not. However since the built in device cannot be removed, the impact is minimal, as built in devices are still detected by `hs._asm.undocumented.touchdevice.devices()`.
+
+- - -
+
+<a name="stop"></a>
+~~~lua
+watcher:stop() -> watcherObject
+~~~
+Stops the watcher so that callbacks for multitouch devices being added or removed are no longer triggered.
+
+Parameters:
+ * None
+
+Returns:
+ * the watcherObject
+
 - - -
 
 ### License
 
 >     The MIT License (MIT)
 >
-> Copyright (c) 2017 Aaron Magill
+> Copyright (c) 2020 Aaron Magill
 >
 > Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 >
