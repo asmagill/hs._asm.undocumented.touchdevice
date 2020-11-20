@@ -110,7 +110,6 @@ module.start = function(idx)
             output = output .. string.format("                 }\n")
             output = output .. string.format("zDensity        % f\n", touch.zDensity)
             output = output .. "\n"
---             output = output .. string.format("_field9          %d <-- unknown purpose\n", touch._field9)
             output = output .. string.format("_field14         %d <-- unknown purpose\n", touch._field14)
             output = output .. string.format("_field15         %d <-- unknown purpose\n", touch._field15)
             module._display.output.text = output

@@ -107,7 +107,6 @@ static int pushMTTouch(lua_State *L, MTTouch *touch) {
     lua_setfield(L, -2, "velocity") ;
     lua_setfield(L, -2, "normalizedVector") ;
     lua_pushnumber(L, (lua_Number)touch->zTotal) ;     lua_setfield(L, -2, "zTotal") ;
-//     lua_pushinteger(L, touch->field9) ;    lua_setfield(L, -2, "_field9") ;
     lua_pushnumber(L, (lua_Number)touch->zPressure) ;  lua_setfield(L, -2, "zPressure") ;
     lua_pushnumber(L, (lua_Number)touch->angle) ;      lua_setfield(L, -2, "angle") ;
     lua_pushnumber(L, (lua_Number)touch->majorAxis) ;  lua_setfield(L, -2, "majorAxis") ;
@@ -997,23 +996,23 @@ static int touchdevice_minDigitizerPressure(lua_State *L) {
     return 1 ;
 }
 
-static int touchdevice_maxDigitizerPressure(lua_State *L) {
-    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
-    [skin checkArgs:LS_TUSERDATA, USERDATA_TAG, LS_TBREAK] ;
-    ASMTouchDevice *obj = [skin toNSObjectAtIndex:1] ;
-    MTDeviceRef device = obj.touchDevice ;
-    lua_pushnumber(L, MTDeviceGetMaxDigitizerPressureValue(device)) ;
-    return 1 ;
-}
+// static int touchdevice_maxDigitizerPressure(lua_State *L) {
+//     LuaSkin *skin = [LuaSkin sharedWithState:L] ;
+//     [skin checkArgs:LS_TUSERDATA, USERDATA_TAG, LS_TBREAK] ;
+//     ASMTouchDevice *obj = [skin toNSObjectAtIndex:1] ;
+//     MTDeviceRef device = obj.touchDevice ;
+//     lua_pushnumber(L, MTDeviceGetMaxDigitizerPressureValue(device)) ;
+//     return 1 ;
+// }
 
-static int touchdevice_digitizerPressureRange(lua_State *L) {
-    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
-    [skin checkArgs:LS_TUSERDATA, USERDATA_TAG, LS_TBREAK] ;
-    ASMTouchDevice *obj = [skin toNSObjectAtIndex:1] ;
-    MTDeviceRef device = obj.touchDevice ;
-    lua_pushnumber(L, MTDeviceGetDigitizerPressureDynamicRange(device)) ;
-    return 1 ;
-}
+// static int touchdevice_digitizerPressureRange(lua_State *L) {
+//     LuaSkin *skin = [LuaSkin sharedWithState:L] ;
+//     [skin checkArgs:LS_TUSERDATA, USERDATA_TAG, LS_TBREAK] ;
+//     ASMTouchDevice *obj = [skin toNSObjectAtIndex:1] ;
+//     MTDeviceRef device = obj.touchDevice ;
+//     lua_pushnumber(L, MTDeviceGetDigitizerPressureDynamicRange(device)) ;
+//     return 1 ;
+// }
 
 static int touchdevice_powerEnabled(lua_State *L) {
     LuaSkin *skin = [LuaSkin sharedWithState:L] ;
@@ -1155,8 +1154,8 @@ static const luaL_Reg userdata_metaLib[] = {
 // Not supported by my devices, so can't test; query methods always return 0
     {"powerEnabled",          touchdevice_powerEnabled},
     {"minDigitizerPressure",  touchdevice_minDigitizerPressure},
-    {"maxDigitizerPressure",  touchdevice_maxDigitizerPressure},
-    {"digitizerPressureRange", touchdevice_digitizerPressureRange},
+//     {"maxDigitizerPressure",  touchdevice_maxDigitizerPressure},
+//     {"digitizerPressureRange", touchdevice_digitizerPressureRange},
 #endif
 
     {"__tostring",            userdata_tostring},

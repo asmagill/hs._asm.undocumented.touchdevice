@@ -48,9 +48,13 @@ typedef struct {
     int32_t     handID ;           // "H" (always 1)
     MTVector    normalizedVector ;
     float       zTotal ;           // "ZTot" (~quality, multiple of 1/8 between 0 and 1)
+
+// most online sources I've found list this as an unknown int32, but experimentation
+// with an external force touch trackpad suggests it's a float indicating some
+// measure of pressure...
 //     int32_t     field9 ;           // always 0
-    float       zPressure ;        // uncertain; on my external force touch trackpad, this tracks as pressure
-                                   //            on my builtin non-force touch trackpad, it remains 0
+    float       zPressure ;        // external force touch trackpad, tracks as pressure
+                                   // builtin non-force touch trackpad, remains 0
     float       angle ;
     float       majorAxis ;
     float       minorAxis ;
