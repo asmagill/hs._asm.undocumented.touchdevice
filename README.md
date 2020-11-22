@@ -69,6 +69,7 @@ touchdevice = require("hs._asm.undocumented.touchdevice")
 * <a href="#familyID">touchdevice:familyID() -> integer</a>
 * <a href="#forceResponseEnabled">touchdevice:forceResponseEnabled([state]) -> touchdeviceObject | boolean</a>
 * <a href="#frameCallback">touchdevice:frameCallback([fn]) -> touchdeviceObject | fn</a>
+* <a href="#ioserviceDetails">touchdevice:ioserviceDetails() -> table</a>
 * <a href="#opaqueSurface">touchdevice:opaqueSurface() -> boolean</a>
 * <a href="#pathCallback">touchdevice:pathCallback([fn]) -> touchdeviceObject | fn</a>
 * <a href="#productName">touchdevice:productName() -> string</a>
@@ -368,6 +369,23 @@ Notes:
    * `touch`     - a table containing an array of touch tables as described in [hs._asm.undocumented.touchdevice.touchData](#touchData) for each of the current touches detected by the touch device.
    * `timestamp` - a number specifying the timestamp for the frame.
    * `frame`     - an integer specifying the frame ID
+
+- - -
+
+<a name="ioserviceDetails"></a>
+~~~lua
+touchdevice:ioserviceDetails() -> table
+~~~
+Returns a table containing the service details for the multitouch device as reported by the macOS IOKit freamework.
+
+Parameters:
+ * None
+
+Returns:
+ * a table containing key-value pairs containing information about the multitouch device as reported by the macOS IOKit framework..
+
+Notes:
+ * This method is provided for infomration purposes only; while this method will return more information than [hs._asm.undocumented.touchdevice:details](#details) it is uncertain if the additional information will actually be useful outside the context of IOKit.
 
 - - -
 
