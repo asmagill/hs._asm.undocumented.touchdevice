@@ -345,6 +345,31 @@ static int touchdevice_deviceID(lua_State *L) {
     return 1 ;
 }
 
+/// hs._asm.undocumented.touchdevice:ioserviceDetails() -> table
+/// Method
+/// Returns a table containing the service details for the multitouch device as reported by the macOS IOKit freamework.
+///
+/// Parameters:
+///  * None
+///
+/// Returns:
+///  * a table containing key-value pairs containing information about the multitouch device as reported by the macOS IOKit framework..
+///
+/// Notes:
+///  * This method is provided for infomration purposes only; while this method will return more information than [hs._asm.undocumented.touchdevice:details](#details) it is uncertain if the additional information will actually be useful outside the context of IOKit.
+static int touchdevice_ioserviceDetails(lua_State *L) {
+    LuaSkin *skin = [LuaSkin sharedWithState:L] ;
+    [skin checkArgs:LS_TUSERDATA, USERDATA_TAG, LS_TBREAK] ;
+    ASMTouchDevice *obj  = [skin toNSObjectAtIndex:1] ;
+    MTDeviceRef device   = obj.touchDevice ;
+    io_service_t service = MTDeviceGetService(device) ;
+    CFMutableDictionaryRef deviceData ;
+    IORegistryEntryCreateCFProperties(service, &deviceData, kCFAllocatorDefault, kNilOptions) ;
+    [skin pushNSObject:(__bridge NSDictionary *)deviceData withOptions:LS_NSDescribeUnknownTypes] ;
+    CFRelease(deviceData) ;
+    return 1 ;
+}
+
 /// hs._asm.undocumented.touchdevice:serialNumber() -> string
 /// Method
 /// Returns the serial number for the multi-touch device
@@ -1123,7 +1148,7 @@ static int userdata_gc(lua_State* L) {
 
 // Metatable for userdata objects
 static const luaL_Reg userdata_metaLib[] = {
-//     {"details",               touchdevice_details},
+    {"ioserviceDetails",      touchdevice_ioserviceDetails},
     {"frameCallback",         touchdevice_frameCallback},
     {"pathCallback",          touchdevice_pathCallback},
     {"start",                 touchdevice_start},
