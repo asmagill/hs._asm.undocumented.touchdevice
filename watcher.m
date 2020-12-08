@@ -168,7 +168,9 @@ static void deviceChangeCallback(void *refCon, io_service_t service, natural_t m
 static void deviceChangeCallback(void *refCon, __unused io_service_t service, natural_t messageType, __unused void *messageArgument) {
     ASMTouchDeviceDevice *deviceNotifier = (__bridge ASMTouchDeviceDevice *)refCon ;
     if (messageType == kIOMessageServiceIsTerminated) {
-        [deviceNotifier.owner removeDevice:deviceNotifier] ;
+        // our hold on it *is* weak, so best to be certain
+        ASMTouchDeviceWatcher *owner = deviceNotifier.owner ;
+        if (owner != nil) [owner removeDevice:deviceNotifier] ;
         IOObjectRelease(deviceNotifier.notification) ;
     }
 }
