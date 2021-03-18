@@ -8,7 +8,7 @@
 #import "MultitouchSupport.h"
 
 static const char * const USERDATA_TAG = "hs._asm.undocumented.touchdevice" ;
-static int refTable = LUA_NOREF;
+static LSRefTable refTable = LUA_NOREF;
 
 #define get_objectFromUserdata(objType, L, idx, tag) (objType*)*((void**)luaL_checkudata(L, idx, tag))
 // #define get_structFromUserdata(objType, L, idx, tag) ((objType *)luaL_checkudata(L, idx, tag))
@@ -1207,7 +1207,7 @@ static luaL_Reg moduleLib[] = {
 
 int luaopen_hs__asm_undocumented_touchdevice_internal(lua_State* L) {
     LuaSkin *skin = [LuaSkin sharedWithState:L] ;
-    refTable = [skin registerLibraryWithObject:USERDATA_TAG
+    refTable = [skin registerLibraryWithObject:"hs._asm.undocumented.touchdevice"
                                      functions:moduleLib
                                  metaFunctions:nil // module_metaLib
                                objectFunctions:userdata_metaLib];

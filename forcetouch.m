@@ -10,7 +10,7 @@
 /// Based in part on code from https://eternalstorms.wordpress.com/2015/11/16/how-to-detect-force-touch-capable-devices-on-the-mac/ and https://github.com/eternalstorms/NSBeginAlertSheet-using-Blocks
 
 // static const char * const USERDATA_TAG = "hs._asm.undocumented.touchdevice.forcetouch" ;
-static int refTable = LUA_NOREF;
+static LSRefTable refTable = LUA_NOREF;
 
 // #define get_objectFromUserdata(objType, L, idx, tag) (objType*)*((void**)luaL_checkudata(L, idx, tag))
 // #define get_structFromUserdata(objType, L, idx, tag) ((objType *)luaL_checkudata(L, idx, tag))
@@ -224,7 +224,7 @@ static luaL_Reg moduleLib[] = {
 int luaopen_hs__asm_undocumented_touchdevice_forcetouch(lua_State* L) {
     LuaSkin *skin = [LuaSkin sharedWithState:L] ;
 // Use this if your module doesn't have a module specific object that it returns.
-   refTable = [skin registerLibrary:moduleLib metaFunctions:nil] ; // or module_metaLib
+   refTable = [skin registerLibrary:"hs._asm.undocumented.touchdevice.forcetouch" functions:moduleLib metaFunctions:nil] ; // or module_metaLib
 // Use this some of your functions return or act on a specific object unique to this module
 //     refTable = [skin registerLibraryWithObject:USERDATA_TAG
 //                                      functions:moduleLib
