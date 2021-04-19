@@ -51,7 +51,7 @@ module._display = canvas.new(canvasFrame)
                                             module._mouseMoveTracker:stop()
                                             module._mouseMoveTracker = nil
                                         else
-                                            local mousePosition = mouse.getAbsolutePosition()
+                                            local mousePosition = mouse.absolutePosition()
                                             module._display:topLeft({ x = mousePosition.x - x, y = mousePosition.y - y })
                                         end
                                     end, false):start()
