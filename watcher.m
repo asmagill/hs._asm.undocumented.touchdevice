@@ -329,7 +329,7 @@ static int pushASMTouchDeviceWatcher(lua_State *L, id obj) {
     return 1;
 }
 
-id toASMTouchDeviceWatcherFromLua(lua_State *L, int idx) {
+static id toASMTouchDeviceWatcherFromLua(lua_State *L, int idx) {
     LuaSkin *skin = [LuaSkin sharedWithState:L] ;
     ASMTouchDeviceWatcher *value ;
     if (luaL_testudata(L, idx, USERDATA_TAG)) {

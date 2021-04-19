@@ -1076,7 +1076,7 @@ static int pushASMTouchDevice(lua_State *L, id obj) {
     return 1;
 }
 
-id toASMTouchDeviceFromLua(lua_State *L, int idx) {
+static id toASMTouchDeviceFromLua(lua_State *L, int idx) {
     LuaSkin *skin = [LuaSkin sharedWithState:L] ;
     ASMTouchDevice *value ;
     if (luaL_testudata(L, idx, USERDATA_TAG)) {
